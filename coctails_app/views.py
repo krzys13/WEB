@@ -14,16 +14,22 @@ from django.contrib.auth.models import User
 from .permissions import IsOwnerOrReadOnly 
 
 
-
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
 
 
 class IngredientViewSet(viewsets.ModelViewSet):
     queryset = Ingredient.objects.all()
-    serializer_class = IngredientSerializer 
+    serializer_class = IngredientSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
 
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
 
 class CocktailViewSet(viewsets.ModelViewSet):
     queryset = Cocktail.objects.all()
@@ -34,15 +40,21 @@ class CocktailViewSet(viewsets.ModelViewSet):
         serializer.save(author=self.request.user)
 
 
-
-
 class CocktailIngredientViewSet(viewsets.ModelViewSet):
     queryset = CocktailIngredient.objects.all()
     serializer_class = CocktailIngredientSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
 
 class UserList(generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
 
 
 

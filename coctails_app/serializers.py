@@ -3,22 +3,37 @@ from .models import Category, Ingredient, Cocktail, CocktailIngredient
 from django.contrib.auth.models import User
 
 
+
+
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = "__all__"
-
+        fields = [
+            "id",
+            "name",
+        ]
 
 class IngredientSerializer(serializers.ModelSerializer):
+    author = serializers.ReadOnlyField(source="author.username")
+
     class Meta:
         model = Ingredient
-        fields = "__all__"
-
+        fields = [
+            "id",
+            "name",
+            "author",
+        ]
 
 class CocktailIngredientSerializer(serializers.ModelSerializer):
+    cocktail_name = serializers.ReadOnlyField(source="cocktail.name")
+    ingredient_name = serializers.ReadOnlyField(source="ingredient.name")
+    author = serializers.ReadOnlyField(source="author.username")
 
-    ingredient = IngredientSerializer(read_only=True)
-
+    cocktail_id = serializers.PrimaryKeyRelatedField(
+        queryset=Cocktail.objects.all(),
+        source="cocktail",
+        write_only=True
+    )
     ingredient_id = serializers.PrimaryKeyRelatedField(
         queryset=Ingredient.objects.all(),
         source="ingredient",
@@ -29,57 +44,72 @@ class CocktailIngredientSerializer(serializers.ModelSerializer):
         model = CocktailIngredient
         fields = [
             "id",
-            "ingredient",
+            "cocktail_name",
+            "cocktail_id",
+            "ingredient_name",
             "ingredient_id",
-            "amount"
+            "amount",
+            "author",
         ]
 
-class UserSerializer(serializers.ModelSerializer):
-    cocktails = serializers.PrimaryKeyRelatedField(
-        many=True, queryset=Category.objects.all())
-    
-    class Meta:
-        model = User
-        fields = ["id", "username", "cocktails"]
-    
-    def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
 
-    
+class CocktailIngredientChildSerializer(serializers.ModelSerializer):
+    ingredient_name = serializers.ReadOnlyField(source="ingredient.name")
+    author = serializers.ReadOnlyField(source="author.username")
+
+    class Meta:
+        model = CocktailIngredient
+        fields = [
+            "id",
+            "ingredient_name",
+            "amount",
+            "author",
+        ]
+
 
 class CocktailSerializer(serializers.ModelSerializer):
-
-    category = CategorySerializer(read_only=True)
-
+    category = serializers.ReadOnlyField(source="category.name")
     category_id = serializers.PrimaryKeyRelatedField(
         queryset=Category.objects.all(),
         source="category",
         write_only=True,
         allow_null=True,
         required=False
-     )
-
-    ingredients = CocktailIngredientSerializer(
-        source = "cocktailingredient_set",
+    )
+    author = serializers.ReadOnlyField(source="author.username")
+    ingredients = CocktailIngredientChildSerializer(
+        source="cocktailingredient_set",
         many=True,
         read_only=True
     )
 
-    author = serializers.ReadOnlyField(source='author.username')
-
     class Meta:
         model = Cocktail
-        fields = "__all__"
-        # [
-        #     "id",
-        #     "name",
-        #     "category",
-        #     "category_id",
-        #     "instructions",
-        #     "is_alcoholic",
-        #     "ingredients"
-        # ]
+        fields = [
+            "id",
+            "name",
+            "category",
+            "category_id",
+            "instructions",
+            "is_alcoholic",
+            "ingredients",
+            "author",
+        ]
 
+
+class UserSerializer(serializers.ModelSerializer):
+    cocktails = serializers.PrimaryKeyRelatedField(
+        many=True,
+        read_only=True
+    )
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "username",
+            "cocktails",
+        ]
 
 
 class UserDetail(generics.RetrieveAPIView):
