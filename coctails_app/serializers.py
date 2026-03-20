@@ -1,6 +1,7 @@
 from rest_framework import serializers, generics
 from .models import Category, Ingredient, Cocktail, CocktailIngredient
 from django.contrib.auth.models import User
+from rest_framework import validators
 
 
 
@@ -12,6 +13,17 @@ class CategorySerializer(serializers.ModelSerializer):
             "id",
             "name",
         ]
+        validators = [validators.UniqueValidator(
+            queryset=Category.objects.all(),
+            message="Category with this name already exists."
+        )]
+
+    def validate_name(self, value):
+        if not value.strip():
+            raise serializers.ValidationError("Name can not be empty or whitespaces.")
+        return value
+
+        
 
 class IngredientSerializer(serializers.ModelSerializer):
     author = serializers.ReadOnlyField(source="author.username")
@@ -23,6 +35,10 @@ class IngredientSerializer(serializers.ModelSerializer):
             "name",
             "author",
         ]
+    def validate_name(self, value):
+        if not value.strip():  
+            raise serializers.ValidationError("Name can not be empty or whitespaces.")
+        return value
 
 class CocktailIngredientSerializer(serializers.ModelSerializer):
     cocktail_name = serializers.ReadOnlyField(source="cocktail.name")
@@ -32,12 +48,14 @@ class CocktailIngredientSerializer(serializers.ModelSerializer):
     cocktail_id = serializers.PrimaryKeyRelatedField(
         queryset=Cocktail.objects.all(),
         source="cocktail",
-        write_only=True
+        write_only=True,
+        required =True,
     )
     ingredient_id = serializers.PrimaryKeyRelatedField(
         queryset=Ingredient.objects.all(),
         source="ingredient",
-        write_only=True
+        write_only = True,
+        required = True,
     )
 
     class Meta:
@@ -51,7 +69,11 @@ class CocktailIngredientSerializer(serializers.ModelSerializer):
             "amount",
             "author",
         ]
-
+        validators = [serializers.UniqueTogetherValidator(
+            queryset=CocktailIngredient.objects.all(),
+            fields=['cocktail', 'ingredient'],
+            message="This ingredient is already added to the cocktail."
+        )]
 
 class CocktailIngredientChildSerializer(serializers.ModelSerializer):
     ingredient_name = serializers.ReadOnlyField(source="ingredient.name")
@@ -64,7 +86,7 @@ class CocktailIngredientChildSerializer(serializers.ModelSerializer):
             "ingredient_name",
             "amount",
             "author",
-        ]
+        ] 
 
 
 class CocktailSerializer(serializers.ModelSerializer):
@@ -96,6 +118,12 @@ class CocktailSerializer(serializers.ModelSerializer):
             "author",
         ]
 
+    def validate_name(self, value):
+        if not value.strip():
+            raise serializers.ValidationError("Name can not be empty or whitespaces.")
+        return value
+
+
 
 class UserSerializer(serializers.ModelSerializer):
     cocktails = serializers.PrimaryKeyRelatedField(
@@ -110,7 +138,10 @@ class UserSerializer(serializers.ModelSerializer):
             "username",
             "cocktails",
         ]
-
+    def validate_username(self, value):
+        if not value.strip():
+            raise serializers.ValidationError("Username can not be empty or whitespaces.")
+        return value
 
 class UserDetail(generics.RetrieveAPIView):
     queryset = User.objects.all()
