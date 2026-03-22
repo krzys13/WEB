@@ -15,9 +15,11 @@ Zaimplementowano następujące elementy:
   - system uprawnień:
     - każdy użytkownik może przeglądać koktajle
     - tylko zalogowany użytkownik może dodawać przepisy
-- zasady autoryzacji:
-  - edycja i usuwanie koktajlu możliwa jest tylko przez:
-    - autora
-    - administratora
-- powiązanie koktajlu z jego autorem
+  - zasady autoryzacji:
+    - edycja i usuwanie koktajlu możliwa jest tylko przez:
+      - autora
+      - administratora
+  - powiązanie koktajlu z jego autorem
 - automatycznie generowaną dokumentację API,OpenAPI
+
+![ERD schema](ERD_schema.png)
